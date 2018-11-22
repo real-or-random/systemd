@@ -233,8 +233,11 @@ static void setup_remaining_vcs(int src_fd, unsigned src_idx, bool utf8) {
 
         /* get metadata of the current font (width, height, count) */
         r = ioctl(src_fd, KDFONTOP, &cfo);
-        if (r < 0)
+        if (r < 0) {
+            /* We get ENOSYS when dealing with the dummy console; this is okay. */
+            if (r != ENOSYS)
                 log_warning_errno(errno, "KD_FONT_OP_GET failed while trying to get the font metadata: %m");
+        }
         else {
                 /* verify parameter sanity first */
                 if (cfo.width > 32 || cfo.height > 32 || cfo.charcount > 512)
@@ -270,7 +273,7 @@ static void setup_remaining_vcs(int src_fd, unsigned src_idx, bool utf8) {
         }
 
         if (cfo.op != KD_FONT_OP_SET)
-                log_warning("Fonts will not be copied to remaining consoles");
+                log_notice("Fonts will not be copied to remaining consoles");
 
         for (i = 1; i <= 63; i++) {
                 char ttyname[sizeof("/dev/tty63")];
